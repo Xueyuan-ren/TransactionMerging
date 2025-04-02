@@ -1,3 +1,16 @@
+## Description
+
+We extend the Benchbase framework to include our implementations of grpc version benchmark.
+
+According to BenchBase documentation, it is a multi-threaded load generator. 
+The framework is designed to be able to produce variable rate,
+variable mixture load against any JDBC-enabled relational database. 
+The framework also provides data collection features, e.g., per-transaction-type latency and throughput logs.
+
+We currently has the following benchmarks: tpcc, Spree.
+
+---
+
 ## Quickstart
 
 To clone and build BenchBase using the `mysql` profile,
@@ -27,19 +40,6 @@ A full list of options can be displayed,
 ```bash
 java -jar benchbase.jar -h
 ```
-
----
-
-## Description
-
-We extend the Benchbase framework to include our implementations of grpc version benchmark.
-
-According to BenchBase documentation, it is a multi-threaded load generator. 
-The framework is designed to be able to produce variable rate,
-variable mixture load against any JDBC-enabled relational database. 
-The framework also provides data collection features, e.g., per-transaction-type latency and throughput logs.
-
-We currently has the following benchmarks: tpcc, Spree.
 
 ---
 
