@@ -1,0 +1,253 @@
+syntax = "proto3";
+package com.grpc.examples;
+
+option java_multiple_files = true;
+option java_package = "com.oltpbenchmark.grpcservice";
+option java_outer_classname = "TxnServiceProto";
+//option objc_class_prefix = "HLW";
+
+service TxnService {
+  // Send a select transaction
+  rpc SelectTxn (SelectRequest) returns (SelectReply);
+  // Send a MakeConnections
+  rpc MakeConnections (OpenRequest) returns (OpenReply);
+  // Send a CloseConnections
+  rpc CloseConnections (CloseRequest) returns (CloseReply);
+  // Send a NewOrder transaction
+  rpc NewOrderTxn (NewOrderRequest) returns (NewOrderReply);
+  // Send a Payment transaction
+  rpc PaymentTxn (PaymentRequest) returns (PaymentReply);
+  // Send a Delivery transaction
+  rpc DeliveryTxn (DeliveryRequest) returns (DeliveryReply);
+  // Send a OrderStatus transaction
+  rpc OrderStatusTxn (OrderStatusRequest) returns (OrderStatusReply);
+  // Send a StockLevel transaction
+  rpc StockLevelTxn (StockLevelRequest) returns (StockLevelReply);
+
+  // Send a Spree NewOrder transaction
+  rpc SpreeNewOrderTxn (SpreeNewOrderRequest) returns (SpreeNewOrderReply);
+  // Send a Spree AddItem transaction
+  rpc SpreeAddItemTxn (SpreeAddItemRequest) returns (SpreeAddItemReply);
+
+  // ping check
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// The request message containing the id
+message SelectRequest {
+  int32 id = 1;
+  int32 workid = 2;
+}
+
+// The response message containing the value
+message SelectReply {
+  string val = 1;
+}
+
+// The MakeConnections request message
+message OpenRequest {
+  int32 terminals = 1;
+}
+
+// The MakeConnections response message
+message OpenReply {
+  bool opened = 1;
+}
+
+// The CloseConnectionsrequest message
+message CloseRequest {
+  bool closing = 1;
+}
+
+// The CloseConnections response message
+message CloseReply {
+  bool closed = 1;
+}
+
+// The NewOrder request message
+message NewOrderRequest {
+  int32 terminalWarehouseID = 1; 
+  int32 districtID = 2;
+  int32 customerID = 3;
+  int32 numItems = 4;
+  int32 allLocal = 5;
+  repeated int32 itemIDs = 6;
+  repeated int32 supplierWarehouseIDs = 7;
+  repeated int32 orderQuantities = 8;
+  int32 workid = 9;
+}
+
+// The NewOrder response message
+message NewOrderReply {
+  //bool result = 1;
+  float discount = 1;
+  string last = 2;
+  string credit = 3;
+  float wtax = 4;
+  int32 nextoid = 5;
+  float dtax = 6;
+  int32 upddist = 7;
+  int32 insoo = 8;
+  int32 insno = 9;
+  repeated int32 insol = 10;
+  repeated int32 updst = 11; 
+}
+
+
+// The Payment request message
+message PaymentRequest {
+  int32 terminalWarehouseID = 1; 
+  int32 districtID = 2;
+  float paymentAmount = 3;
+  int32 customerDistrictID = 4;
+  int32 customerWarehouseID = 5;
+  int32 workid = 6;
+}
+
+// The Payment response message
+message PaymentReply {
+  int32 updwh = 1;
+  Winfo winfo = 2;
+  int32 upddist = 3;
+  Dinfo dinfo = 4;
+  Cinfo cinfo = 5;
+  int32 updbc = 6;
+  int32 updb = 7; 
+  int32 inshist = 8;
+}
+
+// The Warehouse message used in Payment response
+message Winfo {
+  string wstreet1 = 1;
+  string wstreet2 = 2;
+  string wcity = 3;
+  string wstate = 4;
+  string wzip = 5;
+  string wname = 6;
+}
+
+// The District message used in Payment response
+message Dinfo {
+  string dstreet1 = 1;
+  string dstreet2 = 2;
+  string dcity = 3;
+  string dstate = 4;
+  string dzip = 5;
+  string dname = 6;
+}
+
+// The Customer message used in Payment response
+message Cinfo {
+  string cfirst = 1;
+  string cmiddle = 2;
+  string clast = 3;
+  string cstreet1 = 4;
+  string cstreet2 = 5;
+  string ccity = 6;
+  string cstate = 7;
+  string czip = 8;
+  string cphone = 9;
+  string ccredit = 10;
+  float ccredit_lim = 11;
+  float cdiscount = 12;
+  float cbalance = 13;
+  float cytdpayment = 14;
+  int32 cpayment_cnt = 15;
+  string csince = 16;
+}
+
+
+// The Delivery request message
+message DeliveryRequest {
+  int32 terminalWarehouseID = 1; 
+  int32 carrierID = 2;
+  int32 terminalDistrictUpperID = 3;
+  int32 workid = 4;
+}
+
+// The Delivery response message
+message DeliveryReply {
+  repeated int32 delno = 1;
+  repeated int32 updcar = 2;
+  repeated int32 upddd = 3;
+  repeated int32 updbd = 4;
+}
+
+// The OrderStatus request message
+message OrderStatusRequest {
+  int32 terminalWarehouseID = 1; 
+  int32 districtID = 2;
+  bool c_by_name = 3;
+  optional string c_last = 4;
+  optional int32 c_id = 5;
+  int32 workid = 6;
+}
+
+// The OrderStatus response message
+message OrderStatusReply {
+  int32 o_id = 1;
+  int32 o_carrier_id = 2;
+  string o_entry_d = 3;
+  repeated string orderlines = 4;
+}
+
+// // The District message used in Payment response
+// message OLinfo {
+//   string ol_i_id = 1;
+//   string ol_supple_w_id = 2;
+//   string ol_quantity = 3;
+//   string ol_amount = 4;
+//   string ol_delivery_d = 5;
+// }
+
+// The StockLevel request message
+message StockLevelRequest {
+  int32 terminalWarehouseID = 1; 
+  int32 districtID = 2;
+  int32 threshold = 3;
+  int32 workid = 4;
+}
+
+// The StockLevel response message
+message StockLevelReply {
+  int32 o_id = 1;
+  int32 stock_count = 2;
+}
+
+// The Spree NewOrder request message
+message SpreeNewOrderRequest {
+  int32 user_id = 1; 
+  string email = 2;
+  string number = 3;
+  string state = 4;
+  string currency = 5;
+  int32 created_by_id = 6;
+  int32 store_id = 7;
+  int32 workid = 8;
+  int32 terminalWarehouseID = 9;
+  int32 districtID = 10;
+}
+
+// The Spree NewOrder response message
+message SpreeNewOrderReply {
+  bool valid = 1;
+  bool inserted = 2;
+}
+
+// The Spree AddItem request message
+message SpreeAddItemRequest {
+  int32 variant_id = 1;
+  int32 product_id = 2;
+  string currency = 3;
+  int32 order_id = 4;
+  int32 quantity = 5;
+  int32 workid = 6;
+}
+
+// The Spree AddItem response message
+message SpreeAddItemReply {
+  bool completed = 1;
+}
+
+message PingRequest {}
+message PingResponse {}

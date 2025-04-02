@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<plugins>
+    <plugin name="tpccgrpc">com.oltpbenchmark.benchmarks.tpccgrpc.TPCCgrpcBenchmark</plugin>
+    <plugin name="spreegrpc">com.oltpbenchmark.benchmarks.spreegrpc.SpreegrpcBenchmark</plugin>
+</plugins>
