@@ -3,9 +3,9 @@
 To clone and build BenchBase using the `mysql` profile,
 
 ```bash
-git clone --depth 1 https://github.com/cmu-db/benchbase.git
-cd benchbase
-./mvnw clean package -P mysql
+git clone https://github.com/Xueyuan-ren/TransactionMerging.git
+cd gRPC-benchbase
+./mvnw -DskipTests clean package -P mysql
 ```
 
 This produces artifacts in the `target` folder, which can be extracted,
@@ -32,18 +32,14 @@ java -jar benchbase.jar -h
 
 ## Description
 
-Benchmarking is incredibly useful, yet endlessly painful. This benchmark suite is the result of a group of
-PhDs/post-docs/professors getting together and combining their workloads/frameworks/experiences/efforts. We hope this
-will save other people's time, and will provide an extensible platform, that can be grown in an open-source fashion.
+We extend the Benchbase framework to include our implementations of grpc version benchmark.
 
-BenchBase is a multi-threaded load generator. The framework is designed to be able to produce variable rate,
-variable mixture load against any JDBC-enabled relational database. The framework also provides data collection
-features, e.g., per-transaction-type latency and throughput logs.
+According to BenchBase documentation, it is a multi-threaded load generator. 
+The framework is designed to be able to produce variable rate,
+variable mixture load against any JDBC-enabled relational database. 
+The framework also provides data collection features, e.g., per-transaction-type latency and throughput logs.
 
-The BenchBase framework has the following benchmarks:
-
-This framework is design to allow for easy extension. We provide stub code that a contributor can use to include a new
-benchmark, leveraging all the system features (logging, controlled speed, controlled mixture, etc.)
+We currently has the following benchmarks: tpcc, Spree.
 
 ---
 
