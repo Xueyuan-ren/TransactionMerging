@@ -1,10 +1,10 @@
-# To compile, please first install maven and run following commands:
+## To compile, please first install maven and run following commands:
 
 cd gRPC-adaptiveServer/
 
 mvn -DskipTests clean package
 
-# To run the gRPC server for merging:
+## To run the gRPC server for merging:
 
 cd gRPC-adaptiveServer/target
 
