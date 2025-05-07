@@ -1,14 +1,7 @@
 package com.grpc.examples;
 
-import com.grpc.examples.tpcc.DeliveryMT;
-import com.grpc.examples.tpcc.NewOrderMT;
-import com.grpc.examples.tpcc.OrderStatus;
-import com.grpc.examples.tpcc.PaymentMT;
-import com.grpc.examples.tpcc.StockLevel;
-import com.grpc.examples.tpcc.TPCCConfig;
-import com.grpc.examples.spree.SpreeNewOrderMT;
-import com.grpc.examples.spree.SpreeAddItemMT;
-
+import com.grpc.examples.tpcc.*;
+import com.grpc.examples.spree.*;
 import com.grpc.examples.Procedure.UserAbortException;
 import io.grpc.Status;
 
@@ -80,47 +73,6 @@ public class MergeThread extends Thread {
         }
     }
 
-    // public synchronized void flushOrphanedDistricts(int newNumThreads) {
-    //     if (this.threadId >= newNumThreads) {
-    //         // this thread is no longer assigned to any district, flush all message lists
-    //         for (int listIndex = 0; listIndex < newOrderList.size(); listIndex++) {
-    //             if (newOrderList.get(listIndex).size() > 0) {
-    //                 processMessageList(newOrderList.get(listIndex), this::mergeNewOrderTxn);
-    //                 System.out.println("flush neworder inactive thread district " +  listIndex + " from mergeThread " + Thread.currentThread().getName()) ;
-    //             }
-    //         }
-    //         for (List<PaymentMessage> thisDistrict : paymentList) {
-    //             processMessageList(thisDistrict, this::mergePaymentTxn);
-    //         }
-    //         // // flush spree message queues
-    //         // processMessageList(spreeNewOrderList, this::mergeSpreeNewOrderTxn);
-    //         // processMessageList(spreeAddItemList, this::mergeSpreeAddItemTxn);
-    //     } 
-    //     else {
-    //         // this thread is still assigned to some districts, flush only the orphaned districts
-    //         for (int listIndex = 0; listIndex < newOrderList.size(); listIndex++) {
-    //             int assignedThreadId = (listIndex % newNumThreads);
-    //             if (assignedThreadId == this.threadId) {
-    //                 // this district is still assigned to this thread, skip it
-    //                 continue;
-    //             }
-    //             // flush neworder message lists
-    //             if (newOrderList.get(listIndex).size() > 0) {
-    //                 processMessageList(newOrderList.get(listIndex), this::mergeNewOrderTxn);
-    //                 System.out.println("flush neworder orphaned district " +  listIndex + " from mergeThread " + Thread.currentThread().getName()) ;
-    //             }
-    //             if (paymentList.get(listIndex).size() > 0) {
-    //                 // flush payment message lists
-    //                 processMessageList(paymentList.get(listIndex), this::mergePaymentTxn);
-    //                 System.out.println("flush payment orphaned district " +  listIndex + " from mergeThread " + Thread.currentThread().getName()) ;
-    //             }             
-    //         }
-    //         // // flush spree message queues
-    //         // processMessageList(spreeNewOrderList, this::mergeSpreeNewOrderTxn);
-    //         // processMessageList(spreeAddItemList, this::mergeSpreeAddItemTxn);
-    //     }
-    // }
-
     private <T extends GrpcMessage> void processMessageList(List<T> messageList, Consumer<List<T>> mergeFunction) {
         if (messageList.isEmpty()) return;
         mergeFunction.accept(messageList);
@@ -130,12 +82,12 @@ public class MergeThread extends Thread {
                 msg.notify();
             }
         }
-        // System.out.println("Flushing message list" +  " of size " + messageList.size() + " from thread " + this.threadId);
+        
         messageList.clear();
     }
 
     public void run() {
-        //System.out.println("Merge Thread running:  " + Thread.currentThread().getName());
+
         while (running) {
             GrpcMessage reqAndReply = null;
 
@@ -143,202 +95,110 @@ public class MergeThread extends Thread {
                 reqAndReply = msgQueue.poll(1000, TimeUnit.MILLISECONDS); //timeout
                 // queue poll timeout happens
                 if (reqAndReply == null) {
+
                     // execute all remaining requests in each district's neworder message queue
                     for (List<NewOrderMessage> thisDistrict : newOrderList) {
                         processMessageList(thisDistrict, this::mergeNewOrderTxn);
-                        
-                        // if (thisDistrict != null && thisDistrict.size() > 0) {
-                        //     // merge
-                        //     System.out.println("poll timeout for this district's neworder message queue: " + thisDistrict.size() + " from ThreadForMerge: " + Thread.currentThread().getName()) ;
-                        //     mergeNewOrderTxn(thisDistrict);
-                        //     //for each reqAndReply in the list
-                        //     for (int j = 0; j < thisDistrict.size(); j++) {
-                        //         //notify
-                        //         reqAndReply = thisDistrict.get(j);
-                        //         synchronized(reqAndReply){
-                        //             reqAndReply.notify();
-                        //         }
-                        //     }
-                        //     // remove
-                        //     thisDistrict.clear();
-                        // }
                     }
+
                     // execute all remaining requests in each district's payment message queue
                     for (List<PaymentMessage> thisDistrict : paymentList) {
                         processMessageList(thisDistrict, this::mergePaymentTxn);
-                        
-                        // if (thisDistrict != null && thisDistrict.size() > 0) {
-                        //     // merge
-                        //     System.out.println("poll timeout for this district's payment message queue: " + thisDistrict.size() + " from ThreadForMerge: " + Thread.currentThread().getName()) ;
-                        //     mergePaymentTxn(thisDistrict);
-                        //     //for each reqAndReply in the list
-                        //     for (int j = 0; j < thisDistrict.size(); j++) {
-                        //         //notify
-                        //         reqAndReply = thisDistrict.get(j);
-                        //         synchronized(reqAndReply){
-                        //             reqAndReply.notify();
-                        //         }
-                        //     }
-                        //     // remove
-                        //     thisDistrict.clear();
-                        // }
                     }
+
                     // execute all remaining requests in spree neworder message queue
                     processMessageList(spreeNewOrderList, this::mergeSpreeNewOrderTxn);
-
-                    // if (spreeNewOrderList != null && spreeNewOrderList.size() > 0) {
-                    //     // merge
-                    //     System.out.println("poll timeout for spreeNewOrderList: size " + spreeNewOrderList.size() + " from ThreadForMerge: " + Thread.currentThread().getName()) ;
-                    //     mergeSpreeNewOrderTxn(spreeNewOrderList);
-                    //     //for each reqAndReply in distList
-                    //     for (int j = 0; j < spreeNewOrderList.size(); j++) {
-                    //         //notify
-                    //         reqAndReply = spreeNewOrderList.get(j);
-                    //         synchronized(reqAndReply){
-                    //             reqAndReply.notify();
-                    //         }
-                    //     }
-                    //     // remove
-                    //     spreeNewOrderList.clear();
-                    // }
 
                     // execute all remaining requests in spree additem message queue
                     processMessageList(spreeAddItemList, this::mergeSpreeAddItemTxn);
 
-                    // if (spreeAddItemList != null && spreeAddItemList.size() > 0) {
-                    //     // merge
-                    //     System.out.println("poll timeout for spreeAddItemList: size " + spreeAddItemList.size() + " from ThreadForMerge: " + Thread.currentThread().getName()) ;
-                    //     mergeSpreeAddItemTxn(spreeAddItemList);
-                    //     //for each reqAndReply in distList
-                    //     for (int j = 0; j < spreeAddItemList.size(); j++) {
-                    //         //notify
-                    //         reqAndReply = spreeAddItemList.get(j);
-                    //         synchronized(reqAndReply){
-                    //             reqAndReply.notify();
-                    //         }
-                    //     }
-                    //     // remove
-                    //     spreeAddItemList.clear();
-                    // }
                     continue;
                 }
 
-                //int w_id = reqAndReply.getRequest().getTerminalWarehouseID();
                 // message poll succeeds, confirm the type of grpc message
                 if (reqAndReply instanceof SpreeNewOrderMessage) {
                     SpreeNewOrderMessage spreenom = (SpreeNewOrderMessage) reqAndReply;
                     spreeNewOrderList.add(spreenom);
                     if (spreeNewOrderList.size() >= MERGE_SIZE) {
-                        processMessageList(spreeNewOrderList, this::mergeSpreeNewOrderTxn);
-                        // // merge
-                        // mergeSpreeNewOrderTxn(spreeNewOrderList);
-                        // //for each reqAndReply in thisDistrict
-                        // for (int i = 0; i < spreeNewOrderList.size(); i++) {
-                        //     //notify
-                        //     reqAndReply = spreeNewOrderList.get(i);
-                        //     synchronized(reqAndReply){
-                        //         reqAndReply.notify();
-                        //     }
-                        // }
-                        // // remove
-                        // spreeNewOrderList.clear();
+                        processMessageList(spreeNewOrderList, this::mergeSpreeNewOrderTxn);                       
                     }
+
                 } else if (reqAndReply instanceof SpreeAddItemMessage) {
                     SpreeAddItemMessage spreeaim = (SpreeAddItemMessage) reqAndReply;
                     spreeAddItemList.add(spreeaim);
                     if (spreeAddItemList.size() >= MERGE_SIZE) {
-                        processMessageList(spreeAddItemList, this::mergeSpreeAddItemTxn);
-                        // // merge
-                        // mergeSpreeAddItemTxn(spreeAddItemList);
-                        // //for each reqAndReply in thisDistrict
-                        // for (int i = 0; i < spreeAddItemList.size(); i++) {
-                        //     //notify
-                        //     reqAndReply = spreeAddItemList.get(i);
-                        //     synchronized(reqAndReply){
-                        //         reqAndReply.notify();
-                        //     }
-                        // }
-                        // // remove
-                        // spreeAddItemList.clear();
+                        processMessageList(spreeAddItemList, this::mergeSpreeAddItemTxn);                     
                     }
+
                 } else if (reqAndReply instanceof NewOrderMessage) {
                     NewOrderMessage nom = (NewOrderMessage) reqAndReply;
+                    // merging for NewOrderMessage
                     int w_id = nom.getRequest().getTerminalWarehouseID();
                     int district_id = nom.getRequest().getDistrictID();
                     int listIndex = (w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1);
-                    //int listIndex = (district_id - 1) % this.distPerThread;
                     newOrderList.get(listIndex).add(nom);
                     if (newOrderList.get(listIndex).size() >= MERGE_SIZE) {
                         processMessageList(newOrderList.get(listIndex), this::mergeNewOrderTxn);
-                        // // merge
-                        // mergeNewOrderTxn(newOrderList.get(listIndex));
-                        // //for each reqAndReply in thisDistrict
-                        // for (int i = 0; i < newOrderList.get(listIndex).size(); i++) { 
-                        //     //notify
-                        //     reqAndReply = newOrderList.get(listIndex).get(i);
-                        //     synchronized(reqAndReply){
-                        //         reqAndReply.notify();
-                        //     }
-                        // }
-                        // // update intervalRequests
-                        // intervalRequests.addAndGet(newOrderList.get(listIndex).size());
-                        // // remove
-                        // newOrderList.get(listIndex).clear();
                     }
+
+                    // // directly execute each new order request
+                    // executeNewOrderTxn(nom);
+                    // // notify for this new order request
+                    // synchronized(nom){
+                    //     nom.notify();
+                    // }
+
                 } else if (reqAndReply instanceof PaymentMessage) {
                     PaymentMessage paym = (PaymentMessage) reqAndReply;
+                    // merging for PaymentMessage
                     int w_id = paym.getRequest().getTerminalWarehouseID();
                     int district_id = paym.getRequest().getDistrictID();
                     int listIndex = (w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1);
-                    //int listIndex = (district_id - 1) % this.distPerThread;
                     paymentList.get(listIndex).add(paym);
                     if (paymentList.get(listIndex).size() >= MERGE_SIZE) {
-                        processMessageList(paymentList.get(listIndex), this::mergePaymentTxn);
-                        // // merge
-                        // mergePaymentTxn(paymentList.get(listIndex));
-                        // //for each reqAndReply in thisDistrict
-                        // for (int i = 0; i < paymentList.get(listIndex).size(); i++) {
-                        //     //notify
-                        //     reqAndReply = paymentList.get(listIndex).get(i);
-                        //     synchronized(reqAndReply){
-                        //         reqAndReply.notify();
-                        //     }
-                        // }
-                        // // update intervalRequests
-                        // intervalRequests.addAndGet(paymentList.get(listIndex).size());
-                        // // remove
-                        // paymentList.get(listIndex).clear();
+                        processMessageList(paymentList.get(listIndex), this::mergePaymentTxn);                      
                     }
+
+                    // // directly execute each payment request
+                    // executePaymentTxn(paym);
+                    // // notify for this payment request
+                    // synchronized(paym){
+                    //     paym.notify();
+                    // }
+
                 } else if (reqAndReply instanceof DeliveryMessage) {
                     DeliveryMessage delm = (DeliveryMessage) reqAndReply;
-                    // directly execute each delivery request, merge internally
+                    // merging internally for DeliveryMessage
                     executeDeliveryTxn(delm);
                     // notify for this delivery request
                     synchronized(delm){
                         delm.notify();
                     }
-                    // increment intervalRequests
-                    intervalRequests.incrementAndGet();
+                    
+                    // // directly execute each original delivery request
+                    // executeOriginalDeliveryTxn(delm);
+                    // // notify for this delivery request
+                    // synchronized(delm){
+                    //     delm.notify();
+                    // }
+
                 } else if (reqAndReply instanceof OrderStatusMessage) {
                     OrderStatusMessage osm = (OrderStatusMessage) reqAndReply;
-                    // directly execute each order-status request, merge internally
+                    // directly execute each order-status request
                     executeOrderStatusTxn(osm);
                     // notify for this order-status request
                     synchronized(osm){
                         osm.notify();
                     }
-                    // increment intervalRequests
-                    intervalRequests.incrementAndGet();
+
                 } else if (reqAndReply instanceof StockLevelMessage) {
                     StockLevelMessage slm = (StockLevelMessage) reqAndReply;
-                    // directly execute each stock-level request, merge internally
+                    // directly execute each stock-level request
                     executeStockLevelTxn(slm);
                     // notify for this stock-level request
                     synchronized(slm){
                         slm.notify();
                     }
-                    // increment intervalRequests
-                    intervalRequests.incrementAndGet();
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -367,17 +227,15 @@ public class MergeThread extends Thread {
             } catch (SQLException ex) {
                 conn.rollback();
                 if (isRetryable(ex)) {
-                    LOG.debug(String.format("merge: Retryable SQLException occurred during <mergeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    LOG.debug(String.format("merge: Retryable SQLException occurred during <mergeSpreeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
                     status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
                 } else {
-                    LOG.warn(String.format("merge: SQLException occurred during <mergeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    LOG.warn(String.format("merge: SQLException occurred during <mergeSpreeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
                     status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
                 }
 
             } catch (UserAbortException ex) {
-                //System.out.println("UserAbortException: catch " +  ex);
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -387,7 +245,6 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
         
@@ -425,17 +282,15 @@ public class MergeThread extends Thread {
             } catch (SQLException ex) {
                 conn.rollback();
                 if (isRetryable(ex)) {
-                    LOG.debug(String.format("merge: Retryable SQLException occurred during <mergeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    LOG.debug(String.format("merge: Retryable SQLException occurred during <mergeSpreeAddItemTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
                     status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
                 } else {
-                    LOG.warn(String.format("merge: SQLException occurred during <mergeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    LOG.warn(String.format("merge: SQLException occurred during <mergeSpreeAddItemTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
                     status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
                 }
 
             } catch (UserAbortException ex) {
-                //System.out.println("UserAbortException: catch " +  ex);
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -445,7 +300,6 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
         
@@ -466,19 +320,19 @@ public class MergeThread extends Thread {
     }
 
     // execute merged NewOrder transactions
-    private void mergeNewOrderTxn(List<NewOrderMessage> messages) {
+    private void mergeNewOrderTxn(List<NewOrderMessage> neworderMsgs) {
         NewOrderReply response = null;
         Status status = null;
-        NewOrderRequest[] reqArray = new NewOrderRequest[messages.size()];
-        for (int i = 0; i < messages.size(); i++) {
-            NewOrderRequest request = messages.get(i).getRequest();
+        NewOrderRequest[] reqArray = new NewOrderRequest[neworderMsgs.size()];
+        for (int i = 0; i < neworderMsgs.size(); i++) {
+            NewOrderRequest request = neworderMsgs.get(i).getRequest();
             reqArray[i] = request;
         }
-        NewOrderMT new_order = new NewOrderMT(messages.size());
+        NewOrderMT newOrderMT = new NewOrderMT(neworderMsgs.size());
         
         try {
             try {
-                response = new_order.newOrderMergeTransaction(reqArray, conn);
+                response = newOrderMT.newOrderMergeTransaction(reqArray, conn);
                 conn.commit();
 
             } catch (SQLException ex) {
@@ -492,9 +346,7 @@ public class MergeThread extends Thread {
                 }
 
             } catch (UserAbortException ex) {
-                //System.out.println("UserAbortException: catch " +  ex);
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -504,44 +356,89 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
         
         if (response != null) {
             // execution succeeds
             // TODO: distribute different responses to transactions
-            for (int i = 0; i < messages.size(); i++) {
-                messages.get(i).setReply(response);
+            for (int i = 0; i < neworderMsgs.size(); i++) {
+                neworderMsgs.get(i).setReply(response);
             }
         }
 
         if (status != null) {
             // execution fails
-            for (int i = 0; i < messages.size(); i++) {
-                messages.get(i).setStatus(status);
-                // if (status.getDescription() == "UserAbortException") {
-                //     messages.get(i).setRun(1);
-                // }
+            for (int i = 0; i < neworderMsgs.size(); i++) {
+                neworderMsgs.get(i).setStatus(status);
             }
         }
 
     }
 
-    // execute merged Payment transactions
-    public void mergePaymentTxn(List<PaymentMessage> messages) {
-        PaymentReply response = null;
+    // execute the single NewOrder transaction
+    public void executeNewOrderTxn(NewOrderMessage neworderMsg) {
+        NewOrderReply response = null;
         Status status = null;
-        PaymentRequest[] reqArray = new PaymentRequest[messages.size()];
-        for (int i = 0; i < messages.size(); i++) {
-            PaymentRequest request = messages.get(i).getRequest();
-            reqArray[i] = request;
-        }
-        PaymentMT payment = new PaymentMT(messages.size());
+        NewOrderRequest request = neworderMsg.getRequest();
+        
+        NewOrder newOrder = new NewOrder();
         
         try {
             try {
-                response = payment.paymentMergeTransaction(reqArray, conn);
+                response = newOrder.newOrderTransaction(request, conn);
+                conn.commit();
+
+            } catch (SQLException ex) {
+                conn.rollback();
+                if (isRetryable(ex)) {
+                    LOG.debug(String.format("merge: Retryable SQLException occurred during <executeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
+                } else {
+                    LOG.warn(String.format("merge: SQLException occurred during <executeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
+                }
+
+            } catch (UserAbortException ex) {
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("UserAbortException");
+
+            } catch (RuntimeException ex) {
+                // transaction execution calls RuntimeException
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
+            }
+        } catch (SQLException ex) {
+            LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
+            status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
+        }
+
+        if (response != null) {
+            // execution succeeds
+            neworderMsg.setReply(response);
+        }
+
+        if (status != null) {
+            // execution fails
+            neworderMsg.setStatus(status);
+        }
+
+    }
+
+    // execute merged Payment transactions
+    public void mergePaymentTxn(List<PaymentMessage> paymentMsgs) {
+        PaymentReply response = null;
+        Status status = null;
+        PaymentRequest[] reqArray = new PaymentRequest[paymentMsgs.size()];
+        for (int i = 0; i < paymentMsgs.size(); i++) {
+            PaymentRequest request = paymentMsgs.get(i).getRequest();
+            reqArray[i] = request;
+        }
+        PaymentMT paymentMT = new PaymentMT(paymentMsgs.size());
+        
+        try {
+            try {
+                response = paymentMT.paymentMergeTransaction(reqArray, conn);
                 conn.commit();
 
             } catch (SQLException ex) {
@@ -556,7 +453,6 @@ public class MergeThread extends Thread {
 
             } catch (UserAbortException ex) {
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -566,41 +462,89 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
 
         if (response != null) {
             // execution succeeds
             // TODO: distribute different responses to transactions
-            for (int i = 0; i < messages.size(); i++) {
-                messages.get(i).setReply(response);
+            for (int i = 0; i < paymentMsgs.size(); i++) {
+                paymentMsgs.get(i).setReply(response);
             }
         }
 
         if (status != null) {
             // execution fails
-            for (int i = 0; i < messages.size(); i++) {
-                messages.get(i).setStatus(status);
-                // if (status.getDescription() == "UserAbortException") {
-                //     messages.get(i).setRun(1);
-                // }
+            for (int i = 0; i < paymentMsgs.size(); i++) {
+                paymentMsgs.get(i).setStatus(status);
             }
         }
 
     }
 
-    // execute merged Delivery transactions
-    public void executeDeliveryTxn(DeliveryMessage delmsg) {
-        DeliveryReply response = null;
+    // execute the single Payment transaction
+    public void executePaymentTxn(PaymentMessage paymentMsg) {
+        PaymentReply response = null;
         Status status = null;
-        DeliveryRequest request = delmsg.getRequest();
+        PaymentRequest request = paymentMsg.getRequest();
         
-        DeliveryMT delivery = new DeliveryMT(1);
+        Payment payment = new Payment();
         
         try {
             try {
-                response = delivery.deliveryInternalMergeTransaction(request, conn);
+                response = payment.paymentTransaction(request, conn);
+                conn.commit();
+
+            } catch (SQLException ex) {
+                conn.rollback();
+                if (isRetryable(ex)) {
+                    LOG.debug(String.format("merge: Retryable SQLException occurred during <executePaymentTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
+                } else {
+                    LOG.warn(String.format("merge: SQLException occurred during <executePaymentTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
+                }
+
+            } catch (UserAbortException ex) {
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("UserAbortException");
+
+            } catch (RuntimeException ex) {
+                // transaction execution calls RuntimeException
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
+            }
+        } catch (SQLException ex) {
+            LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
+            status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
+        }
+
+        if (response != null) {
+            // execution succeeds
+            paymentMsg.setReply(response);
+        }
+
+        if (status != null) {
+            // execution fails
+            paymentMsg.setStatus(status);
+        }
+
+    }
+
+    // execute merged Delivery transactions
+    public void executeDeliveryTxn(DeliveryMessage delMsg) {
+        DeliveryReply response = null;
+        Status status = null;
+        DeliveryRequest request = delMsg.getRequest();
+        
+        DeliveryMT deliveryMT = new DeliveryMT(1);
+        
+        try {
+            try {
+                // change the isolation level to SERIALIZABLE for the connection of delivery transactions
+                conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+
+                response = deliveryMT.deliveryInternalMergeTransaction(request, conn);
                 conn.commit();
 
             } catch (SQLException ex) {
@@ -615,37 +559,95 @@ public class MergeThread extends Thread {
 
             } catch (UserAbortException ex) {
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
                 // transaction execution calls RuntimeException
                 conn.rollback();
                 status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
+            
+            } finally {
+                // change the isolation level back to default REPEATABLE_READ
+                conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
 
         if (response != null) {
             // execution succeeds
-            delmsg.setReply(response);
+            delMsg.setReply(response);
         }
 
         if (status != null) {
             // execution fails
-            delmsg.setStatus(status);
+            delMsg.setStatus(status);
+        }
+
+    }
+
+    // execute single original Delivery transactions
+    public void executeOriginalDeliveryTxn(DeliveryMessage delMsg) {
+        DeliveryReply response = null;
+        Status status = null;
+        DeliveryRequest request = delMsg.getRequest();
+        
+        Delivery delivery = new Delivery();
+        
+        try {
+            try {
+                // change the isolation level to SERIALIZABLE for the connection of delivery transactions
+                conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+
+                response = delivery.deliveryTransaction(request, conn);
+                conn.commit();
+
+            } catch (SQLException ex) {
+                conn.rollback();
+                if (isRetryable(ex)) {
+                    LOG.debug(String.format("merge: Retryable SQLException occurred during <executeOriginalDeliveryTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
+                } else {
+                    LOG.warn(String.format("merge: SQLException occurred during <executeOriginalDeliveryTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
+                    status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
+                }
+
+            } catch (UserAbortException ex) {
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("UserAbortException");
+
+            } catch (RuntimeException ex) {
+                // transaction execution calls RuntimeException
+                conn.rollback();
+                status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
+            
+            } finally {
+                // change the isolation level back to default REPEATABLE_READ
+                conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            }
+        } catch (SQLException ex) {
+            LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
+            status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
+        }
+
+        if (response != null) {
+            // execution succeeds
+            delMsg.setReply(response);
+        }
+
+        if (status != null) {
+            // execution fails
+            delMsg.setStatus(status);
         }
 
     }
 
     // execute the OrderStatus transaction
-    public void executeOrderStatusTxn(OrderStatusMessage osmsg) {
+    public void executeOrderStatusTxn(OrderStatusMessage osMsg) {
         OrderStatusReply response = null;
         Status status = null;
-        OrderStatusRequest request = osmsg.getRequest();
+        OrderStatusRequest request = osMsg.getRequest();
         
         OrderStatus orderStatus = new OrderStatus();
         
@@ -666,7 +668,6 @@ public class MergeThread extends Thread {
 
             } catch (UserAbortException ex) {
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -676,27 +677,26 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
 
         if (response != null) {
             // execution succeeds
-            osmsg.setReply(response);
+            osMsg.setReply(response);
         }
 
         if (status != null) {
             // execution fails
-            osmsg.setStatus(status);
+            osMsg.setStatus(status);
         }
 
     }
 
     // execute the StockLevel transaction
-    public void executeStockLevelTxn(StockLevelMessage slmsg) {
+    public void executeStockLevelTxn(StockLevelMessage slMsg) {
         StockLevelReply response = null;
         Status status = null;
-        StockLevelRequest request = slmsg.getRequest();
+        StockLevelRequest request = slMsg.getRequest();
         
         StockLevel stockLevel = new StockLevel();
         
@@ -717,7 +717,6 @@ public class MergeThread extends Thread {
 
             } catch (UserAbortException ex) {
                 conn.rollback();
-                //System.out.println("UserAbortException: rollback ");
                 status = Status.INTERNAL.withDescription("UserAbortException");
 
             } catch (RuntimeException ex) {
@@ -727,18 +726,17 @@ public class MergeThread extends Thread {
             }
         } catch (SQLException ex) {
             LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-            //ex.printStackTrace(System.out);
             status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
         }
 
         if (response != null) {
             // execution succeeds
-            slmsg.setReply(response);
+            slMsg.setReply(response);
         }
 
         if (status != null) {
             // execution fails
-            slmsg.setStatus(status);
+            slMsg.setStatus(status);
         }
 
     }

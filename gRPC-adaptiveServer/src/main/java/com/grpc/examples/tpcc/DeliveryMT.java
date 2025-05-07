@@ -25,7 +25,7 @@ public class DeliveryMT extends Procedure {
             " WHERE NO_D_ID = ? " +
             "   AND NO_W_ID = ? " +
             " ORDER BY NO_O_ID ASC " +
-            " LIMIT 1");
+            " LIMIT 1 FOR UPDATE");
 
     public SQLStmt delivDeleteNewOrderSQL = new SQLStmt(
             "DELETE FROM " + TPCCConstants.TABLENAME_NEWORDER +
@@ -70,7 +70,6 @@ public class DeliveryMT extends Procedure {
 
     public DeliveryMT(int merge) {
         MERGE_SIZE = merge;
-        //System.out.println("DeliveryMT MERGE_SIZE: " + MERGE_SIZE);
     }
 
     public DeliveryReply deliveryInternalMergeTransaction(DeliveryRequest request, Connection conn) throws SQLException {
@@ -193,13 +192,7 @@ public class DeliveryMT extends Procedure {
 
             int result = delivDeleteNewOrder.executeUpdate();
 
-            //System.out.println("result = " + result + ", no_o_ids = " + no_o_ids.size());
             if (result != no_o_ids.size()) {
-                // This code used to run in a loop in an attempt to make this work
-                // with MySQL's default weird consistency level. We just always run
-                // this as SERIALIZABLE instead. I don't *think* that fixing this one
-                // error makes this work with MySQL's default consistency.
-                // Careful auditing would be required.
                 String msg = String.format("NewOrder delete failed. Not running with SERIALIZABLE isolation? [w_id=%d, d_ids=%s, no_o_ids=%s", w_id, d_ids.toString(), no_o_ids.toString());
                 throw new UserAbortException(msg);
             }

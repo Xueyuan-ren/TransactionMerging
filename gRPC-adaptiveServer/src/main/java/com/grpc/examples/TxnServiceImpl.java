@@ -193,11 +193,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         for (MergeThread mergeThread : mergeThreads) {
             mergeThread.setMergeSize(mergeSize);
         }
-        
-        // // change and then flush
-        // for (MergeThread mergeThread : mergeThreads) {
-        //     mergeThread.flushOrphanedDistricts(newNumThreads);
-        // }
 
         LOG.info("Updated parameters: mergeSize={}, threadNum={}", this.mergeSize, this.numThreads);
         return true;
@@ -295,18 +290,12 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         int w_id = request.getTerminalWarehouseID();
         int district_id = request.getDistrictID();
         
-        // int idxDist = (district_id - 1) / this.distPerThread;
-        // int idxThread = this.threadPerWhse * (w_id - 1) + idxDist;
         //int workid = request.getWorkid();
         //int idx = workid % numThreads;
-        //int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) * this.threadPerDist + workid % this.threadPerDist;
         int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) % this.numThreads;
-        //System.out.println("idxForAll: " + idxForAll);
 
         try {
             msgQueues.get(idx).put(reqAndReply);
-            //msgQueues.get(idxForAll).put(reqAndReply);
-            //msgQueue.put(reqAndReply);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -330,7 +319,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
 
         if (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
             // wait timeout happens, merge fails for this request, may retry
-            // LOG.info("wait timeout happens, merge fails for this neworder request, may retry");
             status = Status.INTERNAL.withDescription("Retryable SQLException:");
             reqAndReply.setStatus(status);
         }
@@ -361,15 +349,10 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         reqAndReply.setStatus(status);
         int w_id = request.getTerminalWarehouseID();
         int district_id = request.getDistrictID();
-        // int idxForWhse = (district_id - 1) / this.distPerThread;
-        // int idxForAll = this.threadPerWhse * (w_id - 1) + idxForWhse;
-        // int idxDist = (district_id - 1) / this.distPerThread;
-        // int idxThread = this.threadPerWhse * (w_id - 1) + idxDist;
         int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) % this.numThreads;
 
         try {
             msgQueues.get(idx).put(reqAndReply);
-            //msgQueue.put(reqAndReply);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -392,10 +375,9 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         }
 
         if (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
-             //wait timeout happens, merge fails for this request, may retry
-            //  LOG.info("wait timeout happens, merge fails for this payment request, may retry");
-             status = Status.INTERNAL.withDescription("Retryable SQLException:");
-             reqAndReply.setStatus(status);
+            // wait timeout happens, merge fails for this request, may retry
+            status = Status.INTERNAL.withDescription("Retryable SQLException:");
+            reqAndReply.setStatus(status);
         }
 
         if (reqAndReply.getReply() != null) {
@@ -425,13 +407,10 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         int w_id = request.getTerminalWarehouseID();
         // take terminalDistrictUpperID as the district_id for delivery request
         int district_id = request.getTerminalDistrictUpperID();
-        // int idxDist = (district_id - 1) / this.distPerThread;
-        // int idxThread = this.threadPerWhse * (w_id - 1) + idxDist;
         int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) % this.numThreads;
 
         try {
             msgQueues.get(idx).put(reqAndReply);
-            //msgQueue.put(reqAndReply);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -454,8 +433,7 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         }
 
         if (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
-            //wait timeout happens, merge fails for this request, may retry
-            // LOG.info("wait timeout happens, merge fails for this delivery request, may retry");
+            // wait timeout happens, merge fails for this request, may retry
             status = Status.INTERNAL.withDescription("Retryable SQLException:");
             reqAndReply.setStatus(status);
         }
@@ -486,13 +464,10 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         reqAndReply.setStatus(status);
         int w_id = request.getTerminalWarehouseID();
         int district_id = request.getDistrictID();
-        // int idxDist = (district_id - 1) / this.distPerThread;
-        // int idxThread = this.threadPerWhse * (w_id - 1) + idxDist;
         int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) % this.numThreads;
 
         try {
             msgQueues.get(idx).put(reqAndReply);
-            //msgQueue.put(reqAndReply);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -515,8 +490,7 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         }
 
         if (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
-            //wait timeout happens, merge fails for this request, may retry
-            // LOG.info("wait timeout happens, merge fails for this orderstatus request, may retry");
+            // wait timeout happens, merge fails for this request, may retry
             status = Status.INTERNAL.withDescription("Retryable SQLException:");
             reqAndReply.setStatus(status);
         }
@@ -547,13 +521,10 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         reqAndReply.setStatus(status);
         int w_id = request.getTerminalWarehouseID();
         int district_id = request.getDistrictID();
-        // int idxDist = (district_id - 1) / this.distPerThread;
-        // int idxThread = this.threadPerWhse * (w_id - 1) + idxDist;
         int idx = ((w_id - 1) * TPCCConfig.configDistPerWhse + (district_id - 1)) % this.numThreads;
 
         try {
             msgQueues.get(idx).put(reqAndReply);
-            //msgQueue.put(reqAndReply);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -576,8 +547,7 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         }
 
         if (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
-            //wait timeout happens, merge fails for this request, may retry
-            // LOG.info("wait timeout happens, merge fails for this stocklevel request, may retry");
+            // wait timeout happens, merge fails for this request, may retry
             status = Status.INTERNAL.withDescription("Retryable SQLException:");
             reqAndReply.setStatus(status);
         }
@@ -609,7 +579,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
 
         int workid = request.getWorkid();
         int idx = workid % this.numThreads;
-        //System.out.println("idxForAll: " + idxForAll);
 
         try {
             msgQueues.get(idx).put(reqAndReply);
@@ -620,7 +589,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
 
         synchronized(reqAndReply){
             long startTime = System.currentTimeMillis();
-            long timeout = 5000; // 5 second timeout
             while(reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
                 try {
                     long elapsedTime = System.currentTimeMillis() - startTime;
@@ -668,7 +636,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
 
         int workid = request.getWorkid();
         int idx = workid % this.numThreads;
-        //System.out.println("idxForAll: " + idxForAll);
 
         try {
             msgQueues.get(idx).put(reqAndReply);
@@ -679,7 +646,6 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
 
         synchronized(reqAndReply){
             long startTime = System.currentTimeMillis();
-            long timeout = 5000; // 5 second timeout
             while (reqAndReply.getReply() == null && reqAndReply.getStatus() == null) {
                 try {
                     long elapsedTime = System.currentTimeMillis() - startTime;
@@ -714,149 +680,5 @@ public class TxnServiceImpl extends TxnServiceGrpc.TxnServiceImplBase {
         }
 
     }
-
-    // private Connection createConnection(String url, String user, String password) {
-    //     Connection conn = null;
-    //     try {
-    //         conn = DriverManager.getConnection(url, user, password);
-    //         conn.setAutoCommit(false);
-    //         conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);   
-    //     } catch (SQLException ex) {
-    //         ex.printStackTrace(System.out);
-    //         throw new RuntimeException("MergeThread failed to connect to database", ex);
-    //     }
-        
-    //     return conn;
-    // }
-
-    // // execute single NewOrder transaction
-    // private void executeNewOrderTxn(GrpcMessage reqAndReply) {
-    //     NewOrderMessage newordermsg = (NewOrderMessage) reqAndReply;
-    //     NewOrderReply response = null;
-    //     Status status = null;
-    //     NewOrderRequest request = newordermsg.getRequest();
-    //     NewOrder new_order = new NewOrder();
-    //     // get a db connection
-    //     // try-with-resource statement ensures resource is closed at the end of it
-    //     try (Connection conn = createConnection(url, user, password)) {
-    //         try {
-    //             response = new_order.newOrderTransaction(request, conn);
-    //             conn.commit();
-
-    //         } catch (SQLException ex) {
-    //             conn.rollback();
-    //             if (isRetryable(ex)) {
-    //                 LOG.debug(String.format("execute: Retryable SQLException occurred during <executeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
-    //                 status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
-    //             } else {
-    //                 LOG.warn(String.format("execute: SQLException occurred during <executeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
-    //                 status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
-    //             }
-
-    //         } catch (UserAbortException ex) {
-    //             conn.rollback();
-    //             status = Status.INTERNAL.withDescription("UserAbortException:").augmentDescription(ex.getMessage());
-
-    //         } catch (RuntimeException ex) {
-    //             // transaction execution calls RuntimeException
-    //             conn.rollback();
-    //             status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
-    //         }
-    //     } catch (SQLException ex) {
-    //         LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-    //         //ex.printStackTrace(System.out);
-    //         status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
-    //     }
-
-    //     if (response != null) {
-    //         //execution succeeds
-    //         newordermsg.setReply(response);
-    //     }
-
-    //     if (status != null) {
-    //         //execution fails
-    //         newordermsg.setStatus(status);
-    //     }
-
-    // }
-
-    // // execute spree single NewOrder transaction
-    // private void executeSpreeNewOrderTxn(GrpcMessage reqAndReply) {
-    //     SpreeNewOrderMessage newordermsg = (SpreeNewOrderMessage) reqAndReply;
-    //     SpreeNewOrderReply response = null;
-    //     Status status = null;
-    //     SpreeNewOrderRequest request = newordermsg.getRequest();
-    //     SpreeNewOrder spree_neworder = new SpreeNewOrder();
-    //     // get a db connection
-    //     // try-with-resource statement ensures resource is closed at the end of it
-    //     try (Connection conn = createConnection(url, user, password)) {
-    //         try {
-    //             response = spree_neworder.spreeNewOrderTransaction(request, conn);
-    //             conn.commit();
-
-    //         } catch (SQLException ex) {
-    //             conn.rollback();
-    //             if (isRetryable(ex)) {
-    //                 LOG.debug(String.format("execute: Retryable SQLException occurred during <executeNewOrderTxn>... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
-    //                 status = Status.INTERNAL.withDescription("Retryable SQLException:").augmentDescription(ex.getMessage());
-    //             } else {
-    //                 LOG.warn(String.format("execute: SQLException occurred during <executeNewOrderTxn> and will not be retried... sql state [%s], error code [%d].", ex.getSQLState(), ex.getErrorCode()), ex);
-    //                 status = Status.INTERNAL.withDescription("Unretryable SQLException:").augmentDescription(ex.getMessage());
-    //             }
-
-    //         } catch (UserAbortException ex) {
-    //             conn.rollback();
-    //             status = Status.INTERNAL.withDescription("UserAbortException:").augmentDescription(ex.getMessage());
-
-    //         } catch (RuntimeException ex) {
-    //             // transaction execution calls RuntimeException
-    //             conn.rollback();
-    //             status = Status.INTERNAL.withDescription("Transaction RuntimeException:").augmentDescription(ex.getMessage());
-    //         }
-    //     } catch (SQLException ex) {
-    //         LOG.warn(String.format("Unexpected SQLException in [%s] when executing [%s].", this, new Throwable().getStackTrace()[0].getMethodName()), ex);
-    //         //ex.printStackTrace(System.out);
-    //         status = Status.INTERNAL.withDescription("Unexpected SQLException:").augmentDescription(ex.getMessage());
-    //     }
-
-    //     if (response != null) {
-    //         //execution succeeds
-    //         newordermsg.setReply(response);
-    //     }
-
-    //     if (status != null) {
-    //         //execution fails
-    //         newordermsg.setStatus(status);
-    //     }
-
-    // }
-
-    // private boolean isRetryable(SQLException ex) {
-        
-    //     String sqlState = ex.getSQLState();
-    //     int errorCode = ex.getErrorCode();
-        
-    //     LOG.debug("sql state [{}] and error code [{}]", sqlState, errorCode);
-        
-    //     if (sqlState == null) {
-    //         return false;
-    //     }
-    //     // ------------------
-    //     // MYSQL: https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-error-sqlstates.html
-    //     // ------------------
-    //     if (errorCode == 1213 && sqlState.equals("40001")) {
-    //         // MySQL ER_LOCK_DEADLOCK
-    //         return true;
-    //     } else if (errorCode == 1205 && sqlState.equals("40001")) {
-    //         // MySQL ER_LOCK_WAIT_TIMEOUT
-    //         return true;
-    //     }
-        
-    //     // ------------------
-    //     // POSTGRES: https://www.postgresql.org/docs/current/errcodes-appendix.html
-    //     // ------------------
-    //     // Postgres serialization_failure
-    //     return errorCode == 0 && sqlState.equals("40001");
-    // }
 
 }

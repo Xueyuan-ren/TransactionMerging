@@ -20,7 +20,7 @@ public class Delivery extends Procedure {
             " WHERE NO_D_ID = ? " +
             "   AND NO_W_ID = ? " +
             " ORDER BY NO_O_ID ASC " +
-            " LIMIT 1");
+            " LIMIT 1 FOR UPDATE");
 
     public SQLStmt delivDeleteNewOrderSQL = new SQLStmt(
             "DELETE FROM " + TPCCConstants.TABLENAME_NEWORDER +
