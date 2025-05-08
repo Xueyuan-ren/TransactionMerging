@@ -68,10 +68,8 @@ public class TPCCgrpcWorker extends Worker<TPCCgrpcBenchmark> {
 
         this.numWarehouses = numWarehouses;
 
-        // rxy: Generate the gRPC channel and stub for this TPCCWorker to connect with gRPC server
-        String target1 = "10.10.1.2:8080";
-        this.target = target1;
-
+        // rxy: Generate the gRPC channel and stub for this TPCCgrpcWorker to connect with gRPC server
+        this.target = "10.10.1.2:8080";
         this.channel = Grpc.newChannelBuilder(this.target, InsecureChannelCredentials.create()).build();
         this.blockingStub = TxnServiceGrpc.newBlockingStub(this.channel);
 

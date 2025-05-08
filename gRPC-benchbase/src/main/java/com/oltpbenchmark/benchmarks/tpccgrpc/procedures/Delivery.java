@@ -41,19 +41,13 @@ public class Delivery extends TPCCProcedure {
 
     private static final Logger LOG = LoggerFactory.getLogger(Delivery.class);
 
-    //private TxnServiceGrpc.TxnServiceBlockingStub blockingStub;
-
     public void run(Connection conn, ManagedChannel channel, TxnServiceGrpc.TxnServiceBlockingStub blockingStub, Random gen, int w_id, int numWarehouses, 
                     int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCgrpcWorker w) 
                     throws SQLException, StatusRuntimeException {
 
         int o_carrier_id = TPCCUtil.randomNumber(1, 10, gen);
-
-        //String target = "10.10.1.2:8080";
         int workid = w.getId();
-        // ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        // blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-        
+
         DeliveryRequest request = DeliveryRequest.newBuilder()
                                     .setTerminalWarehouseID(w_id)
                                     .setCarrierID(o_carrier_id)
@@ -62,18 +56,7 @@ public class Delivery extends TPCCProcedure {
                                     .build();
 
         DeliveryReply response;
-        //try {
         response = blockingStub.deliveryTxn(request);
-        // } finally {
-        //     try {
-        //         channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-        //     } catch (Exception e) {
-        //         //java Logger
-        //         //logger.log(Level.WARNING, "exception thrown: {0}", e);
-        //         LOG.warn("exception thrown: {0}", e);
-        //     }
-        // }
-
     }
 
 }

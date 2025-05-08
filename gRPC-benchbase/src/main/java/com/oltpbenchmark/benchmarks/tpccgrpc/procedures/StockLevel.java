@@ -42,8 +42,6 @@ public class StockLevel extends TPCCProcedure {
 
     private static final Logger LOG = LoggerFactory.getLogger(StockLevel.class);
 
-    //private TxnServiceGrpc.TxnServiceBlockingStub blockingStub;
-
     public void run(Connection conn, ManagedChannel channel, TxnServiceGrpc.TxnServiceBlockingStub blockingStub, Random gen, int w_id, int numWarehouses, 
                     int terminalDistrictLowerID, int terminalDistrictUpperID, TPCCgrpcWorker w) 
                     throws SQLException, StatusRuntimeException  {
@@ -51,11 +49,7 @@ public class StockLevel extends TPCCProcedure {
         int threshold = TPCCUtil.randomNumber(10, 20, gen);
         int d_id = TPCCUtil.randomNumber(terminalDistrictLowerID, terminalDistrictUpperID, gen);
 
-        //String target = "10.10.1.2:8080";
         int workid = w.getId();
-        //ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        //blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-        
         StockLevelRequest request = StockLevelRequest.newBuilder()
                                     .setTerminalWarehouseID(w_id)
                                     .setDistrictID(d_id)
@@ -64,18 +58,7 @@ public class StockLevel extends TPCCProcedure {
                                     .build();
 
         StockLevelReply response;
-        //try {
         response = blockingStub.stockLevelTxn(request);
-        // } finally {
-        //     try {
-        //         channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-        //     } catch (Exception e) {
-        //         //java Logger
-        //         //logger.log(Level.WARNING, "exception thrown: {0}", e);
-        //         LOG.warn("exception thrown: {0}", e);
-        //     }
-        // }
-
     }
 
 }

@@ -79,6 +79,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
         this.currStatement = null;
         this.transactionTypes = this.configuration.getTransTypes();
         this.conn = null;
+        // gRPC server will handle the connection
         // if (!this.configuration.getNewConnectionPerTxn()) {
         //     try {
         //         this.conn = this.benchmark.makeConnection();
@@ -445,7 +446,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("%s %s committing...", this, transactionType));
                     }
-
+                    // connection commit or rollback is handled in the gRPC server
                     //conn.commit();
 
                     break;
@@ -477,6 +478,8 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
                     }
 
                 } catch (StatusRuntimeException ex) {
+                    // receive StatusRuntimeException from gRPC server
+                    // handle the exception as above
                     //final String msg = String.format("Unexpected StatusRuntimeException in '%s' when executing '%s' on [%s]", this, transactionType, databaseType.name());
                     final Status grpc_status = ex.getStatus();
                     final String err_des = grpc_status.getDescription();

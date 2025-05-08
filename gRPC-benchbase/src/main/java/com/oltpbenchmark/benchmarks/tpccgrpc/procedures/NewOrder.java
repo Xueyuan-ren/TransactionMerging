@@ -47,16 +47,12 @@ public class NewOrder extends TPCCProcedure {
         int[] orderQuantities = new int[numItems];
         int allLocal = 1;
 
-        //int districtItemLowerID = (districtID-1) * 10000 + 1;
-        //int districtItemUpperID = districtID * 10000;
         for (int i = 0; i < numItems; i++) {
             // nonuniform distribution: default
             itemIDs[i] = TPCCUtil.getItemID(gen);
             // uniform distribution
             //itemIDs[i] = (int) (gen.nextDouble() * (100000 - 1) + 1);
-            // uniform distribution between a fixed range for each district
-            //itemIDs[i] = TPCCUtil.randomNumber(districtItemLowerID, districtItemUpperID, gen);
-
+            
             if (TPCCUtil.randomNumber(1, 100, gen) > 1) {
                 supplierWarehouseIDs[i] = terminalWarehouseID; // local warehouse
             } else {
@@ -70,25 +66,10 @@ public class NewOrder extends TPCCProcedure {
         }
         
         // we need to cause 1% of the new orders to be rolled back.
-        // rxy: generate a metric to measure actual throughput deleting the aborted transactions
         if (TPCCUtil.randomNumber(1, 100, gen) == 1) {
             itemIDs[numItems - 1] = TPCCConfig.INVALID_ITEM_ID;
         }
 
-        // deprecated grpc implementation: each request will create a new channel and stub
-        // String target = null;
-        // String target1 = "10.10.1.2:8080";
-        // String target2 = "10.10.1.3:8080";
-
-        // if (terminalWarehouseID <= 5) {
-        //     target = target1;
-        // } else {
-        //     target = target2;
-        // }
-
-        //ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        //blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-        
         int workid = w.getId();
         NewOrderRequest request = NewOrderRequest.newBuilder()
                                     .setTerminalWarehouseID(terminalWarehouseID)
@@ -102,17 +83,6 @@ public class NewOrder extends TPCCProcedure {
                                     .setWorkid(workid)
                                     .build();
         NewOrderReply response;
-        // deprecated grpc message implementation: put try...finally... block to shutdown grpc channel
-        //try {
         response = blockingStub.newOrderTxn(request);
-        //} finally {
-        //     try {
-        //         channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-        //     } catch (Exception e) {
-        //         //java Logger
-        //         //logger.log(Level.WARNING, "exception thrown: {0}", e);
-        //         LOG.warn("exception thrown: {0}", e);
-        //     }
-        // }
     }
 }

@@ -47,7 +47,6 @@ public class OrderStatus extends TPCCProcedure {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderStatus.class);
 
-    // private TxnServiceGrpc.TxnServiceBlockingStub blockingStub;
     private OrderStatusRequest.Builder requestBuilder = OrderStatusRequest.newBuilder();
 
     public void run(Connection conn, ManagedChannel channel, TxnServiceGrpc.TxnServiceBlockingStub blockingStub, Random gen, int w_id, int numWarehouses, 
@@ -71,11 +70,7 @@ public class OrderStatus extends TPCCProcedure {
             requestBuilder.setCId(c_id);
         }
 
-        //String target = "10.10.1.2:8080";
         int workid = w.getId();
-        //ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        //blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-        
         OrderStatusRequest request = requestBuilder.setTerminalWarehouseID(w_id)
                                                     .setDistrictID(d_id)
                                                     .setCByName(c_by_name)
@@ -83,18 +78,7 @@ public class OrderStatus extends TPCCProcedure {
                                                     .build();
 
         OrderStatusReply response;
-        //try {
         response = blockingStub.orderStatusTxn(request);
-        // } finally {
-        //     try {
-        //         channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-        //     } catch (Exception e) {
-        //         //java Logger
-        //         //logger.log(Level.WARNING, "exception thrown: {0}", e);
-        //         LOG.warn("exception thrown: {0}", e);
-        //     }
-        // }
-
     }
 
 }

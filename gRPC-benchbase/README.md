@@ -1,27 +1,21 @@
 ## Description
 
-We extend the Benchbase framework to include our implementations of grpc version benchmark.
+We implement the gRPC benchmark based on the Benchbase framework to include the grpc version TPC-C and Spree benchmark.
 
-According to BenchBase documentation, it is a multi-threaded load generator. 
-The framework is designed to be able to produce variable rate,
-variable mixture load against any JDBC-enabled relational database. 
-The framework also provides data collection features, e.g., per-transaction-type latency and throughput logs.
-
-We currently has the following benchmarks: tpcc, Spree.
+We currently have the following benchmarks: TPC-C, Spree.
 
 ---
 
 ## Quickstart
 
-To clone and build BenchBase using the `mysql` profile,
+To compile the Benchbase using the `mysql` profile:
 
 ```bash
-git clone https://github.com/Xueyuan-ren/TransactionMerging.git
 cd gRPC-benchbase
 ./mvnw -DskipTests clean package -P mysql
 ```
 
-This produces artifacts in the `target` folder, which can be extracted,
+This produces artifacts in the `target` folder, which can be extracted:
 
 ```bash
 cd target
@@ -29,7 +23,7 @@ tar xvzf benchbase-mysql.tgz
 cd benchbase-mysql
 ```
 
-Inside this folder, you can run BenchBase. For example, to execute the `tpcc` benchmark,
+To execute the Benchbase with `tpcc` benchmark:
 
 ```bash
 java -jar benchbase.jar -b tpcc -c config/mysql/sample_tpcc_config.xml --create=true --load=true --execute=true
@@ -44,32 +38,6 @@ java -jar benchbase.jar -h
 ---
 
 ## Usage Guide
-
-### How to Build
-Run the following command to build the distribution for a given database specified as the profile name (`-P`).  
-The following profiles are currently supported: `mysql`.
-
-```bash
-./mvnw clean package -P <profile name>
-```
-
-The following files will be placed in the `./target` folder:
-
-* `benchbase-<profile name>.tgz`
-* `benchbase-<profile name>.zip`
-
-### How to Run
-Once you build and unpack the distribution, you can run `benchbase` just like any other executable jar.  The following examples assume you are running from the root of the expanded `.zip` or `.tgz` distribution.  If you attempt to run `benchbase` outside of the distribution structure you may encounter a variety of errors including `java.lang.NoClassDefFoundError`.
-
-To bring up help contents:
-```bash
-java -jar benchbase.jar -h
-```
-
-To execute the `tpcc` benchmark:
-```bash
-java -jar benchbase.jar -b tpcc -c config/mysql/sample_tpcc_config.xml --create=true --load=true --execute=true
-```
 
 The following options are provided:
 

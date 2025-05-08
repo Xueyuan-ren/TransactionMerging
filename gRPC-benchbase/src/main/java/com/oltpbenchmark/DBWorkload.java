@@ -468,11 +468,6 @@ public class DBWorkload {
         if (isBooleanOptionSet(argsLine, "execute")) {
             // Bombs away!
             try {
-                //rxy: check connections for Grpc servers
-                int terminals = xmlConfig.getInt("terminals", 1);
-                //makeConnections(terminals);
-                //makeConnections2(terminals);
-
                 Results r = runWorkload(benchList, intervalMonitor);
                 writeOutputs(r, activeTXTypes, argsLine, xmlConfig);
                 writeHistograms(r);
@@ -484,9 +479,8 @@ public class DBWorkload {
                     LOG.info("Histograms JSON Data: " + fileName);
                 }
 
-                //rxy: shutdown gRPC servers
+                // rxy: shutdown the gRPC server
                 closeConnections(true);
-                //closeConnections2(true);
 
             } catch (Throwable ex) {
                 LOG.error("Unexpected error when executing benchmarks.", ex);
@@ -693,33 +687,6 @@ public class DBWorkload {
         return (false);
     }
 
-    // private static void makeConnections(int terminals) {
-    //     String target = "10.10.1.2:8080";
-    //     ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-    //     blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-    //     OpenRequest request = OpenRequest.newBuilder()
-    //                                 .setTerminals(terminals)
-    //                                 .build();
-    //     OpenReply response;
-    //     try {
-    //         response = blockingStub.makeConnections(request);
-    //         if (response.getOpened()) {
-    //             LOG.info("Create db connections for Grpc: {}", terminals);
-    //         } else {
-    //             LOG.error("Cannot create db connections for Grpc exceeding MAX_POOL_SIZE(150).");
-    //             System.exit(1);
-    //         }
-    //     } finally {
-    //         try {
-    //             channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-    //         } catch (Exception e) {
-    //             //java Logger
-    //             //logger.log(Level.WARNING, "exception thrown: {0}", e);
-    //             LOG.warn("exception thrown: {0}", e);
-    //         }
-    //     }
-    // }
-
     private static void closeConnections(boolean closing) {
         String target = "10.10.1.2:8080";
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
@@ -746,56 +713,4 @@ public class DBWorkload {
         }
     }
 
-    // private static void makeConnections2(int terminals) {
-    //     String target = "10.10.1.3:8080";
-    //     ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-    //     blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-    //     OpenRequest request = OpenRequest.newBuilder()
-    //                                 .setTerminals(terminals)
-    //                                 .build();
-    //     OpenReply response;
-    //     try {
-    //         response = blockingStub.makeConnections(request);
-    //         if (response.getOpened()) {
-    //             LOG.info("Create db connections for Grpc: {}", terminals);
-    //         } else {
-    //             LOG.error("Cannot create db connections for Grpc exceeding MAX_POOL_SIZE(150).");
-    //             System.exit(1);
-    //         }
-    //     } finally {
-    //         try {
-    //             channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-    //         } catch (Exception e) {
-    //             //java Logger
-    //             //logger.log(Level.WARNING, "exception thrown: {0}", e);
-    //             LOG.warn("exception thrown: {0}", e);
-    //         }
-    //     }
-    // }
-
-    private static void closeConnections2(boolean closing) {
-        String target = "10.10.1.3:8080";
-        ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        blockingStub = TxnServiceGrpc.newBlockingStub(channel);
-        CloseRequest request = CloseRequest.newBuilder()
-                                    .setClosing(closing)
-                                    .build();
-        CloseReply response;
-        try {
-            response = blockingStub.closeConnections(request);
-            if (response.getClosed()) {
-                LOG.info("shutdown gRPC server2.");
-            } else {
-                LOG.warn("Cannot shutdown gRPC server2.");
-            }
-        } finally {
-            try {
-                channel.shutdownNow().awaitTermination(5L, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                //java Logger
-                //logger.log(Level.WARNING, "exception thrown: {0}", e);
-                LOG.warn("exception thrown: {0}", e);
-            }
-        }
-    }
 }
